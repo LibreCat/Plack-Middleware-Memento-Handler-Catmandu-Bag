@@ -2,7 +2,6 @@ package Plack::Middleware::Memento::Handler::Catmandu;
 
 use Catmandu::Sane;
 use Catmandu;
-use Catmandu::Plugin::Versioning qw/get_history/;
 use Moo;
 
 our $VERSION = '0.01';
@@ -11,9 +10,16 @@ with 'Plack::Middleware::Memento::Handler';
 
 has store => (is => 'ro', required => 1);
 has bag => (is => 'ro', reuqired => 1);
+has uri_pattern => (is => 'ro', required => 1);
 
 
-sub get_memento {}
+sub get_memento {
+  my ($self,$id, $memento_time) = @_;
+  my $bag = Catmandu->store($self->store )->bag($self->bag)->version_bag;
+
+  my $v = $bag->get_version($id,1);
+  return [sprintf($self->uri_pattern, $id),$v->{date_updated}];
+}
 
 sub get_all_mementos {
   my ($self, $id) = @_;
@@ -21,8 +27,9 @@ sub get_all_mementos {
 
   my $mementos = $bag->get_history($id);
   my @time_map = map {
-      [$_->{_id},$_->{date_updated}]
+      [sprintf($self->uri_pattern, $_->{_id}), $_->{date_updated}]
     } @$mementos;
+
   return \@time_map;
 }
 
