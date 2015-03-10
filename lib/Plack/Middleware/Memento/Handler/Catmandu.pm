@@ -15,7 +15,7 @@ has uri_pattern => (is => 'ro', required => 1);
 
 sub get_memento {
   my ($self,$id, $memento_time) = @_;
-  my $bag = Catmandu->store($self->store )->bag($self->bag)->version_bag;
+  my $bag = Catmandu->store($self->store )->bag($self->bag);
 
   my $v = $bag->get_version($id,1);
   return [sprintf($self->uri_pattern, $id),$v->{date_updated}];
@@ -23,7 +23,7 @@ sub get_memento {
 
 sub get_all_mementos {
   my ($self, $id) = @_;
-  my $bag = Catmandu->store($self->store )->bag($self->bag)->version_bag;
+  my $bag = Catmandu->store($self->store )->bag($self->bag);
 
   my $mementos = $bag->get_history($id);
   my @time_map = map {
