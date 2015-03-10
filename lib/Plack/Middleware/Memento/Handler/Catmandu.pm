@@ -52,20 +52,20 @@ sub get_memento {
 
   my @diff = map {
     my $rec = $_;
-    [sprintf($self->uri_pattern, "$rec->{_id}_$rec->{_version}"), $rec->{date_updated}, $self->_calc_date_diff($memento_time, $rec->{date_updated})];
+    [sprintf($self->uri_pattern, "$rec->{_id}_$rec->{_version}"), $self->_calc_date_diff($memento_time, $rec->{date_updated})];
   } @$mementos;
 
-  my @closest = sort {$a->[2] <=> $b->[2]} @diff;
-  my $c = shift @closest;
-  pop @$c;
-  $c;
+  my @closest = sort {$a->[1] <=> $b->[1]} @diff;
+  $closest[0]->[0];
 }
 
 sub get_all_mementos {
   my ($self, $id) = @_;
 
   [ map {
-      [sprintf($self->uri_pattern, "$_->{_id}_$_->{_version}"), $_->{date_updated}]
+      my $dt = $self->iso8601->parse_datetime($_->{date_updated});
+      my $date = $self->rfc2822->format_datetime($dt);
+      [sprintf($self->uri_pattern, "$_->{_id}_$_->{_version}"), $date]
     } @{$self->_get_all_versions($id)} ];
 }
 
