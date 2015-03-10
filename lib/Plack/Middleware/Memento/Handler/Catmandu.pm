@@ -2,6 +2,9 @@ package Plack::Middleware::Memento::Handler::Catmandu;
 
 use Catmandu::Sane;
 use Catmandu;
+use Catmandu::Util qw/is_instance/;
+use DateTime::Format::ISO8601;
+use DateTime::Format::Mail;
 use Moo;
 
 our $VERSION = '0.01';
@@ -9,26 +12,55 @@ our $VERSION = '0.01';
 with 'Plack::Middleware::Memento::Handler';
 
 has store => (is => 'ro', required => 1);
-has bag => (is => 'ro', reuqired => 1);
+has bag => (is => 'ro', required => 1);
 has uri_pattern => (is => 'ro', required => 1);
 
 
+sub _get_all_versions {
+  my ($self, $id) = @_;
+  my $store = $self->store;
+  unless (is_instance($store)) {
+    $store = Catmandu->store($store);
+  }
+  my $bag = $store->bag($self->bag);
+  return $bag->get_history($id);
+}
+
+sub _calc_date_diff {
+  my ($mem_date, $date_updated) = @_;
+
+my $parser = DateTime::Format::ISO8601->new();
+my $parser2 = DateTime::Format::Mail->new();
+my $dt1 = $parser->parse_datetime($date_updated);
+my $dt2 = $parser2->parse_datetime($mem_date);
+
+$dt1->epoch() - $dt2->epoch();
+
+}
+
 sub get_memento {
   my ($self,$id, $memento_time) = @_;
-  my $bag = Catmandu->store($self->store )->bag($self->bag);
 
-  my $v = $bag->get_version($id,1);
-  return [sprintf($self->uri_pattern, $id),$v->{date_updated}];
+  my $mementos = $self->_get_all_versions($id);
+
+  my @diff = map {
+    my $rec = $_;
+    [$rec->{_id}, $rec->{date_updated}, _calc_date_diff($memento_time, $rec->{date_updated})];
+  } @$mementos;
+
+  my @closest = sort {$a->[2] <=> $b->[2]} @diff;
+  #$closest[0]->[0,1];
+  my $c = shift @closest;
+  pop @$c;
+  return $c;
 }
 
 sub get_all_mementos {
   my ($self, $id) = @_;
-  my $bag = Catmandu->store($self->store )->bag($self->bag);
 
-  my $mementos = $bag->get_history($id);
   my @time_map = map {
       [sprintf($self->uri_pattern, $_->{_id}), $_->{date_updated}]
-    } @$mementos;
+    } @{$self->_get_all_versions($id)};
 
   return \@time_map;
 }
