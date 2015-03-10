@@ -1,8 +1,30 @@
 package Plack::Middleware::Memento::Handler::Catmandu;
 
-use strict;
-use 5.008_005;
+use Catmandu::Sane;
+use Catmandu;
+use Catmandu::Plugin::Versioning qw/get_history/;
+use Moo;
+
 our $VERSION = '0.01';
+
+with 'Plack::Middleware::Memento::Handler';
+
+has store => (is => 'ro', required => 1);
+has bag => (is => 'ro', reuqired => 1);
+
+
+sub get_memento {}
+
+sub get_all_mementos {
+  my ($self, $id) = @_;
+  my $bag = Catmandu->store($self->store )->bag($self->bag)->version_bag;
+
+  my $mementos = $bag->get_history($id);
+  my @time_map = map {
+      [$_->{_id},$_->{date_updated}]
+    } @$mementos;
+  return \@time_map;
+}
 
 1;
 __END__
