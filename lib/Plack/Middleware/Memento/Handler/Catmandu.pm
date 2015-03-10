@@ -45,7 +45,7 @@ sub get_memento {
 
   my @diff = map {
     my $rec = $_;
-    [$rec->{_id}, $rec->{date_updated}, _calc_date_diff($memento_time, $rec->{date_updated})];
+    [sprintf($self->uri_pattern, $rec->{_id}), $rec->{date_updated}, _calc_date_diff($memento_time, $rec->{date_updated})];
   } @$mementos;
 
   my @closest = sort {$a->[2] <=> $b->[2]} @diff;
