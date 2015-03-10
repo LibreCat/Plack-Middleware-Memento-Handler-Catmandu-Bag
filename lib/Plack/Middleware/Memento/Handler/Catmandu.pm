@@ -2,7 +2,7 @@ package Plack::Middleware::Memento::Handler::Catmandu;
 
 use Catmandu::Sane;
 use Catmandu;
-use Catmandu::Util qw/is_instance/;
+use Catmandu::Util qw(is_instance);
 use DateTime::Format::ISO8601;
 use DateTime::Format::Mail;
 use Moo;
@@ -15,27 +15,34 @@ has store => (is => 'ro', required => 1);
 has bag => (is => 'ro', required => 1);
 has uri_pattern => (is => 'ro', required => 1);
 
+has iso8601 => (is => 'lazy');
+has rfc2822 => (is => 'lazy');
+
+sub _build_iso8601 {
+    DateTime::Format::ISO8601->new;
+}
+
+sub _build_rfc2822 {
+    DateTime::Format::Mail->new;
+}
 
 sub _get_all_versions {
-  my ($self, $id) = @_;
-  my $store = $self->store;
-  unless (is_instance($store)) {
+    my ($self, $id) = @_;
+    my $store = $self->store;
+    unless (is_instance($store)) {
     $store = Catmandu->store($store);
-  }
-  my $bag = $store->bag($self->bag);
-  return $bag->get_history($id);
+    }
+    my $bag = $store->bag($self->bag);
+    $bag->get_history($id);
 }
 
 sub _calc_date_diff {
-  my ($mem_date, $date_updated) = @_;
+    my ($self, $mem_date, $date_updated) = @_;
 
-my $parser = DateTime::Format::ISO8601->new();
-my $parser2 = DateTime::Format::Mail->new();
-my $dt1 = $parser->parse_datetime($date_updated);
-my $dt2 = $parser2->parse_datetime($mem_date);
+    my $dt1 = $self->iso8601->parse_datetime($date_updated);
+    my $dt2 = $self->rfc2822->parse_datetime($mem_date);
 
-$dt1->epoch() - $dt2->epoch();
-
+    abs($dt1->epoch - $dt2->epoch);
 }
 
 sub get_memento {
@@ -45,24 +52,21 @@ sub get_memento {
 
   my @diff = map {
     my $rec = $_;
-    [sprintf($self->uri_pattern, "$rec->{_id}_$rec->{_version}"), $rec->{date_updated}, _calc_date_diff($memento_time, $rec->{date_updated})];
+    [sprintf($self->uri_pattern, "$rec->{_id}_$rec->{_version}"), $rec->{date_updated}, $self->_calc_date_diff($memento_time, $rec->{date_updated})];
   } @$mementos;
 
   my @closest = sort {$a->[2] <=> $b->[2]} @diff;
-  #$closest[0]->[0,1];
   my $c = shift @closest;
   pop @$c;
-  return $c;
+  $c;
 }
 
 sub get_all_mementos {
   my ($self, $id) = @_;
 
-  my @time_map = map {
+  [ map {
       [sprintf($self->uri_pattern, "$_->{_id}_$_->{_version}"), $_->{date_updated}]
-    } @{$self->_get_all_versions($id)};
-
-  return \@time_map;
+    } @{$self->_get_all_versions($id)} ];
 }
 
 1;
