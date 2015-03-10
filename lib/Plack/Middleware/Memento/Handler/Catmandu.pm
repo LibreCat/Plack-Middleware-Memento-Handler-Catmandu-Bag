@@ -59,7 +59,7 @@ sub get_all_mementos {
   my ($self, $id) = @_;
 
   my @time_map = map {
-      [sprintf($self->uri_pattern, $_->{_id}), $_->{date_updated}]
+      [sprintf($self->uri_pattern, "$rec->{_id}_$rec->{_version}"), $_->{date_updated}]
     } @{$self->_get_all_versions($id)};
 
   return \@time_map;
