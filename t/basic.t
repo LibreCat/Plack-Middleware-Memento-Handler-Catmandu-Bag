@@ -1,8 +1,13 @@
 use strict;
+use warnings;
 use Test::More;
-use Plack::Middleware::Memento::Handler::Catmandu;
+use Test::Exception;
 
-# replace with the actual test
-ok 1;
+my $pkg;
+
+BEGIN {
+    $pkg = 'Plack::Middleware::Memento::Handler::Catmandu::Bag';
+    use_ok $pkg;
+}
 
 done_testing;

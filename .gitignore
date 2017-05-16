@@ -1,4 +1,5 @@
-/Plack-Middleware-Memento-Handler-Catmandu-*
+.DS_Store
+/Plack-Middleware-Memento-Handler-Catmandu-Bag-*
 /.build
 /_build*
 /Build
