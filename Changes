@@ -1,4 +1,6 @@
 Revision history for Plack-Middleware-Memento-Handler-Catmandu
 
 {{$NEXT}}
+
+0.01  2017-05-19 13:34:38 CEST
         - Initial release

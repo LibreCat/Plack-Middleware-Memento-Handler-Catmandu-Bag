@@ -26,6 +26,7 @@ my %module_build_args = (
     "Catmandu" => "1.0506",
     "DateTime::Format::ISO8601" => 0,
     "Moo" => 0,
+    "Plack::Middleware::Memento::Handler" => 0,
     "namespace::clean" => 0,
     "perl" => "v5.10.1"
   },
