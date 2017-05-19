@@ -7,7 +7,6 @@ our $VERSION = '0.01';
 use Catmandu;
 use Catmandu::Util qw(is_string is_instance);
 use DateTime::Format::ISO8601;
-use Plack::Request;
 use Moo;
 use namespace::clean;
 
